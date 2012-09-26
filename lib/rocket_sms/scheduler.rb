@@ -60,7 +60,7 @@ module RocketSMS
     end
 
     def shutdown
-      log "Shutdown complete."
+      log "Scheduler DOWN."
       EM.stop
     end
 

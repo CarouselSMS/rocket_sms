@@ -8,10 +8,12 @@ require 'multi_json'
 require 'singleton'
 require 'securerandom'
 require 'ostruct'
+require 'forwardable'
 
 require "rocket_sms/version"
 
 module RocketSMS
+  extend self
 
   # Disable ruby-smpp logging
   require 'tempfile'
@@ -23,12 +25,12 @@ module RocketSMS
     require LIB_PATH + dep
   end
 
-  def self.start
-    
+  def start
+    gateway.start
   end
 
-  def self.queues
-    @@queues ||= {
+  def queues
+    @queues ||= {
       mt: {
         pending: 'gateway:queues:mt:pending',
         retries: 'gateway:queues:mt:retries',
@@ -39,45 +41,62 @@ module RocketSMS
     }
   end
 
-  def self.gateway
-    @@gateway ||= RocketSMS::Gateway.instance
+  def gateway
+    @gateway ||= RocketSMS::Gateway.instance
   end
 
-  def self.pids
-    @@pids ||= { scheduler: nil, transceivers: { } }
-  end
-
-  def self.redis
-    @@redis ||= EM::Hiredis.connect(redis_url)
+  def redis
+    @redis ||= EM::Hiredis.connect(redis_url)
   end
 
   # Configuration and Setup
-  def self.configure
+  def configure
     yield self
   end
 
-  def self.configurations=(yaml_file_location)
-    @@configurations = YAML.load(IO.read(yaml_file_location))
+  def settings=(yaml_file_location)
+    @settings = symbolize_keys(YAML.load(IO.read(yaml_file_location)))
+    redis_url = @settings[:redis] && @settings[:redis][:url]
+    log_location = @settings[:log] && @settings[:log][:location]
   end
 
-  def self.configurations
-    @@configurations
+  def settings
+    @settings
   end
 
-  def self.redis_url
-    @@redis_url
+  def redis_url
+    @redis_url ||= "redis://localhost:6379"
   end
 
-  def self.redis_url=(url)
-    @@redis_url = url
+  def redis_url=(url)
+    @redis_url = url unless url.nil?
   end
 
-  def self.logger
-    @@logger ||= Logger.new(STDOUT)
+  def logger
+    @logger ||= Logger.new(log_location)
   end
 
-  def self.log=(location)
-    @@logger = Logger.new(location)
+  def log_location
+    @log_location ||= STDOUT
+  end
+
+  def log_location=(location)
+    @log_location = location unless location.nil?
+  end
+
+  def symbolize_keys(hash)
+    hash.inject({}){|result, (key, value)|
+      new_key = case key
+                when String then key.to_sym
+                else key
+                end
+      new_value = case value
+                  when Hash then symbolize_keys(value)
+                  else value
+                  end
+      result[new_key] = new_value
+      result
+    }
   end
 
 end

@@ -1,3 +1,7 @@
+redis:
+  url: nil
+log:
+  location: STDOUT
 transceivers:
   bind1:
     throughput: 50.0

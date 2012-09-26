@@ -29,9 +29,26 @@ t = Proc.new do
   end
 end
 
-1000.times do
-  t.call
-  sleep 1
+threads = []
+threads << Thread.new do
+  1000.times do
+    t.call
+    sleep 1
+  end
 end
+
+threads << Thread.new do
+  l = r.llen('gateway:queues:mt:success')
+  while true do
+    nl = r.llen('gateway:queues:mt:success')
+    speed = l - nl
+    puts speed
+    l = nl
+    sleep 1
+  end
+end
+
+threads.each{ |t| t.join }
+
 
 

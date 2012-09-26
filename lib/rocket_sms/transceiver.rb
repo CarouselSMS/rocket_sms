@@ -7,6 +7,7 @@ module RocketSMS
       @active = true
       @online = false
       @fast = false
+      @settings = {}
     end
 
     def redis
@@ -34,7 +35,7 @@ module RocketSMS
     end
 
     def throughput
-      @throughput ||= 1.0
+      @settings && @settings[:throughput] ||= 1.0
     end
 
     def start
@@ -74,23 +75,22 @@ module RocketSMS
     end
 
     def shutdown
-      log "#{@id} - Shutdown complete."
+      log "Transceiver #{@id} DOWN."
       EM.stop
     end
 
     def configure
       return unless @active
       @configurator = EM::Timer.new(1){ configure }
-      redis.hget("gateway:transceivers:#{@id}", "settings") do |payload|
-        if payload
-          @settings = MultiJson.load(payload, symbolize_keys: true)
-        else
-          stop
-        end
-      end
-      redis.hget("gateway:transceivers:#{@id}", "throughput") do |payload|
-        if payload
-          @throughput = payload.to_f
+      redis.multi
+      redis.hget("gateway:transceivers:#{@id}", "throughput")
+      redis.hget("gateway:transceivers:#{@id}", "connection")
+      redis.exec do |response|
+        if response or response.flatten.empty?
+          throughput_payload = response[0]
+          connection_payload = response[1]
+          @settings[:throughput] = throughput_payload.to_f
+          @settings[:connection] = MultiJson.load(connection_payload, symbolize_keys: true)
         else
           stop
         end
@@ -99,7 +99,7 @@ module RocketSMS
 
     def connect
       return unless @active
-      if @settings
+      if @settings and @settings[:connection]
         log "Connecting transceiver #{@id}."
         @connection = EM.connect(
           @settings[:connection][:host], 
