@@ -31,7 +31,7 @@ end
 
 threads = []
 threads << Thread.new do
-  1000.times do
+  10000.times do
     t.call
     sleep 1
   end
