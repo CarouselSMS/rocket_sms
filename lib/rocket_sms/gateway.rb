@@ -23,7 +23,7 @@ module RocketSMS
     def start
       EM.run do
         log "Starting Gateway"
-        clean_up_stale_transceivers
+        startup
         # Trap exit-related signals
         Signal.trap("INT") { |signal| stop(signal) }
         Signal.trap("TERM") { |signal| stop(signal) }
@@ -38,6 +38,10 @@ module RocketSMS
         log "Stopping. Waiting 5 seconds for pending operations to finish."
         @kill = true
         @active = false
+        Process.wait(@scheduler[:pid]) if @scheduler[:pid]
+        if @transceivers
+          @transceivers.each_value{ |t| Process.wait(t[:pid]) if t[:pid] }
+        end
         EM::Timer.new(5){ shutdown }
       end
     end
@@ -45,6 +49,10 @@ module RocketSMS
     def shutdown
       log "Gateway DOWN."
       EM.stop
+    end
+
+    def startup
+      clean_up_stale_transceivers
     end
 
     def clean_up_stale_transceivers

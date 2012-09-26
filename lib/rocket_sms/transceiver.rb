@@ -62,7 +62,7 @@ module RocketSMS
         log "#{@id} - Forcing Exit. Check your data for losses."
         shutdown
       else
-        log "#{@id} - Stopping. Waiting 5 seconds for pending operations to finish."
+        log "#{@id} - Stopping. Waiting for pending operations to finish."
         @kill = true
         @active = false
         @connection.close_connection_after_writing if @connection
@@ -70,13 +70,37 @@ module RocketSMS
         @configurator.cancel if @configurator
         @reconnector.cancel if @reconnector
         redis.del("gateways:transceivers:#{@id}")
-        EM::Timer.new(5){ shutdown }
+        cleanup
       end
     end
 
     def shutdown
       log "Transceiver #{@id} DOWN."
       EM.stop
+    end
+
+    def cleanup
+      redis.zrangebyscore("gateway:transceivers:#{@id}:dispatch", '-inf', '+inf') do |payloads|
+        puts payloads
+        if payloads and !payloads.empty?
+          op = Proc.new do |payload, iter|
+            message = Message.from_json(payload)
+            message.send_at, message.expires_at = nil, nil
+            redis.multi
+            redis.zrem("gateway:transceivers:#{@id}:dispatch", payload)
+            redis.lpush("gateway:transceivers:pending", payload)
+            redis.exec do |resp|
+              iter.next
+            end
+          end
+          cb = Proc.new do |responses|
+            EM::Timer.new(3){ shutdown }
+          end
+          EM::Iterator.new(payloads).each(op,cb)
+        else
+          EM::Timer.new(3){ shutdown }
+        end
+      end
     end
 
     def configure
@@ -138,6 +162,8 @@ module RocketSMS
               log "Message #{message.id} detected on #{@id} but has expired. Retrying."
               message.add_pass
               redis.lpush(queues[:mt][:pending], message.to_json)
+              @dispatcher.cancel if @dispatcher
+              EM.next_tick{ dispatch }
             end
           else
             @fast = false
@@ -152,13 +178,18 @@ module RocketSMS
     end
 
     def send_message(message)
-      if @online
-        log "Sending Message #{message.id} through DID #{message.sender} via #{@id}."
-        @connection.send_mt(message.id,message.sender,message.receiver,message.body)
-      else
-        log "#{@id} is not connected. Pushing message #{message.id} to dispatch queue."
-        score = (message.send_at * 1000).to_i
-        redis.zadd("gateway:transceivers:#{@id}:dispatch", score , payload)
+      begin
+        if @online
+          log "Sending Message #{message.id} through DID #{message.sender} via #{@id}."
+          @connection.send_mt(message.id,message.sender,message.receiver,message.body)
+        else
+          log "#{@id} is not connected. Pushing message #{message.id} to dispatch queue."
+          score = (message.send_at * 1000).to_i
+          redis.zadd("gateway:transceivers:#{@id}:dispatch", score , payload)
+        end
+      rescue Exception
+        log "### Error Sending MT #{message.id} with DID #{message.sender} through Transceiver #{@id}. Retrying message."
+        redis.lpush(queues[:mt][:pending], message.to_json)
       end
     end
 
