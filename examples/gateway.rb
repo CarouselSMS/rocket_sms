@@ -1,12 +1,12 @@
 require 'rubygems'
 require 'redis'
 require 'json'
-require Dir.getwd + "/lib/lean_sms"
+require Dir.getwd + "/lib/rocket_sms"
 
-LeanSMS.configure do |config|
+RocketSMS.configure do |config|
   # config.redis_url = REDIS_URL
   config.configurations = 'examples/gateway.yml'
-  config.logger = Logger.new(Dir.getwd + '/tmp/gateway.log')
+  config.log = Dir.getwd + '/tmp/gateway.log'
 end
 
-LeanSMS.start
+RocketSMS.start

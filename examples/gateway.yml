@@ -1,7 +1,7 @@
 transceivers:
   bind1:
     throughput: 50.0
-    config:
+    connection:
       host: '0.0.0.0'
       port: 6000
       system_id: 'hugo'
@@ -17,11 +17,11 @@ transceivers:
       enquire_link_delay_secs: 10
   bind2:
     throughput: 50.0
-    config:
+    connection:
       host: '0.0.0.0'
-      port: 2775
-      system_id: 'foo'
-      password: 'bar'
+      port: 6001
+      system_id: 'hugo'
+      password: 'ggoohu'
       system_type: '' 
       interface_version: 52
       source_ton: 0

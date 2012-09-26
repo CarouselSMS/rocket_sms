@@ -30,13 +30,13 @@ module RocketSMS
   def self.queues
     @@queues ||= {
       mt: {
-        pending: 'gateway:queues:mts:pending',
-        retry: 'gateway:queues:mts:retry',
-        dispatch: 'gateway:queues:mts:dispatch',
-        success: 'gateway:queues:mts:success',
-        failure: 'gateway:queues:mts:failure'
+        pending: 'gateway:queues:mt:pending',
+        retry: 'gateway:queues:mt:retry',
+        dispatch: 'gateway:queues:mt:dispatch',
+        success: 'gateway:queues:mt:success',
+        failure: 'gateway:queues:mt:failure'
       },
-      mo: 'gateway:queues:mos:received'
+      mo: 'gateway:queues:mo:received'
     }
   end
 
@@ -77,8 +77,8 @@ module RocketSMS
     @@logger ||= Logger.new(STDOUT)
   end
 
-  def self.logger=(log_handler)
-    @@logger = log_handler
+  def self.log=(location)
+    @@logger = Logger.new(location)
   end
 
 end
