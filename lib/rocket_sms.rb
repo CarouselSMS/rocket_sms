@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'eventmachine'
-require 'connection_pool'
 require 'smpp'
 require 'em-hiredis'
 require 'oj'
@@ -25,7 +24,7 @@ module RocketSMS
   end
 
   def self.start
-    puts 'starting'
+    
   end
 
   def self.queues
@@ -49,7 +48,7 @@ module RocketSMS
   end
 
   def self.redis
-    @@redis ||= ConnectionPool.new(size: 10){ EM::Hiredis.connect(redis_url) }
+    @@redis ||= EM::Hiredis.connect(redis_url)
   end
 
   # Configuration and Setup
