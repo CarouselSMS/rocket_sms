@@ -8,6 +8,7 @@ require 'oj'
 require 'multi_json'
 require 'singleton'
 require 'securerandom'
+require 'ostruct'
 
 require "rocket_sms/version"
 
@@ -19,7 +20,7 @@ module RocketSMS
 
   LIB_PATH = File.dirname(__FILE__) + '/rocket_sms/'
 
-  %w{ gateway did message transceiver scheduler configurator lock }.each do |dep|
+  %w{ gateway did message transceiver scheduler lock }.each do |dep|
     require LIB_PATH + dep
   end
 
@@ -31,8 +32,7 @@ module RocketSMS
     @@queues ||= {
       mt: {
         pending: 'gateway:queues:mt:pending',
-        retry: 'gateway:queues:mt:retry',
-        dispatch: 'gateway:queues:mt:dispatch',
+        retries: 'gateway:queues:mt:retries',
         success: 'gateway:queues:mt:success',
         failure: 'gateway:queues:mt:failure'
       },
