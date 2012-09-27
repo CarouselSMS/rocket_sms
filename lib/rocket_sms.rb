@@ -26,6 +26,8 @@ module RocketSMS
   end
 
   def start
+    @pid = Process.pid
+    #Process.daemon
     gateway.start
   end
 
@@ -33,7 +35,6 @@ module RocketSMS
     @queues ||= {
       mt: {
         pending: 'gateway:queues:mt:pending',
-        retries: 'gateway:queues:mt:retries',
         success: 'gateway:queues:mt:success',
         failure: 'gateway:queues:mt:failure'
       },

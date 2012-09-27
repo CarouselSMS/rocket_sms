@@ -22,16 +22,17 @@ dids = []
 end
 
 t = Proc.new do
-  50.times do |i|
+  45.times do |i|
     id = "#{SecureRandom.hex(8)}"
     message = {id: id, sender: dids.sample[:number], receiver: '9999999999', body: 'Hello World!' }
-    r.lpush('gateway:queues:mt:pending', message.to_json)
+    score = (Time.now.to_f*1000).to_i
+    r.zadd('gateway:queues:mt:pending', score, message.to_json)
   end
 end
 
 threads = []
 threads << Thread.new do
-  10000.times do
+  while true do
     t.call
     sleep 1
   end

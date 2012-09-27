@@ -108,17 +108,26 @@ module RocketSMS
 
     def detect
       return unless @active
-      if @fast
-        EM.next_tick{ detect } 
-      else
-        @detector = EM::Timer.new(1){ detect }
-      end
-      redis.rpop(queues[:mt][:pending]) do |payload|
-        if payload
-          @fast = true
-          process_payload(payload)
-        else
-          @fast = false
+      interval = @fast ? 0.001 : 1
+      @detector = EM::Timer.new(interval){ detect }
+      redis.multi
+      redis.zrange(queues[:mt][:pending], 0, 0, "WITHSCORES")
+      redis.zremrangebyrank(queues[:mt][:pending], 0, 0)
+      redis.exec do |response|
+        if response
+          (payload, score) = response[0]
+          if payload and score
+            @fast = true
+            now = (Time.now.to_f*1000).to_i
+            if score.to_i <= now
+              process_payload(payload)
+            else
+              redis.zadd(queues[:mt][:pending], score, payload)
+              @fast = false
+            end
+          else
+            @fast = false
+          end
         end
       end
     end
@@ -143,27 +152,32 @@ module RocketSMS
     end
 
     def schedule(message, did_payload)
-      if @transceivers.keys.empty? or @throughput == 0
-        retry_message(message)
-      else
-        did = Did.from_json(did_payload)
-        if !@dids[did.number]
-          @dids[did.number] = {}
-          @dids[did.number][:last_send] = Time.now.to_f + 1
-        end
-        interval = did.throughput.to_f**-1
-        last_send = @dids[did.number][:last_send]
-        if Time.now.to_f - last_send > interval
-          base_time = Time.now.to_f + 1
+      if @active
+        if @transceivers.keys.empty? or @throughput == 0
+          retry_message(message)
         else
-          base_time = last_send
+          did = Did.from_json(did_payload)
+          if !@dids[did.number]
+            @dids[did.number] = {}
+            @dids[did.number][:last_send] = Time.now.to_f + 1
+          end
+          interval = did.throughput.to_f**-1
+          last_send = @dids[did.number][:last_send]
+          if Time.now.to_f - last_send > interval
+            base_time = Time.now.to_f + 1
+          else
+            base_time = last_send
+          end
+          message.send_at = base_time + interval
+          message.expires_at = message.send_at + 50*interval
+          @dids[did.number][:last_send] = message.send_at
+          score = (message.send_at * 1000).to_i
+          transceiver_id = pick_transceiver
+          redis.zadd("gateway:transceivers:#{transceiver_id}:dispatch", score, message.to_json)
         end
-        message.send_at = base_time + interval
-        message.expires_at = message.send_at + 50*interval
-        @dids[did.number][:last_send] = message.send_at
+      else
         score = (message.send_at * 1000).to_i
-        transceiver_id = pick_transceiver
-        redis.zadd("gateway:transceivers:#{transceiver_id}:dispatch", score, message.to_json)
+        redis.zadd(queues[:mt][:pending], score, message.to_json)
       end
     end
 
@@ -183,9 +197,8 @@ module RocketSMS
         redis.rpush(queues[:mt][:failure], message.to_json)
       else
         message.add_pass
-        redis.lpush(queues[:mt][:retries], message.to_json) do |llen|
-          EM::Timer.new(15){ redis.rpoplpush(queues[:mt][:retries],queues[:mt][:pending]) }
-        end
+        score = (Time.now.to_f + 15)*1000.to_i
+        redis.zadd(queues[:mt][:pending], score, message.to_json)
       end
     end
 

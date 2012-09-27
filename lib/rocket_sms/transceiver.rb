@@ -81,14 +81,14 @@ module RocketSMS
 
     def cleanup
       redis.zrangebyscore("gateway:transceivers:#{@id}:dispatch", '-inf', '+inf') do |payloads|
-        puts payloads
         if payloads and !payloads.empty?
           op = Proc.new do |payload, iter|
             message = Message.from_json(payload)
             message.send_at, message.expires_at = nil, nil
+            score = (Time.now.to_f*1000).to_i
             redis.multi
             redis.zrem("gateway:transceivers:#{@id}:dispatch", payload)
-            redis.lpush("gateway:transceivers:pending", payload)
+            redis.zadd(queues[:mt][:pending], score, payload)
             redis.exec do |resp|
               iter.next
             end
@@ -110,7 +110,7 @@ module RocketSMS
       redis.hget("gateway:transceivers:#{@id}", "throughput")
       redis.hget("gateway:transceivers:#{@id}", "connection")
       redis.exec do |response|
-        if response or response.flatten.empty?
+        if response and !response.flatten.include?(nil)
           throughput_payload = response[0]
           connection_payload = response[1]
           @settings[:throughput] = throughput_payload.to_f
@@ -161,7 +161,8 @@ module RocketSMS
             elsif message.expires_at <= now
               log "Message #{message.id} detected on #{@id} but has expired. Retrying."
               message.add_pass
-              redis.lpush(queues[:mt][:pending], message.to_json)
+              score = (( Time.now.to_f + 15 ) * 1000).to_i
+              redis.zadd(queues[:mt][:pending], score, message.to_json)
               @dispatcher.cancel if @dispatcher
               EM.next_tick{ dispatch }
             end
@@ -189,7 +190,9 @@ module RocketSMS
         end
       rescue Exception
         log "### Error Sending MT #{message.id} with DID #{message.sender} through Transceiver #{@id}. Retrying message."
-        redis.lpush(queues[:mt][:pending], message.to_json)
+        message.add_pass
+        score = (( Time.now.to_f + 15 ) * 1000).to_i
+        redis.zadd(queues[:mt][:pending], score, message.to_json)
       end
     end
 
