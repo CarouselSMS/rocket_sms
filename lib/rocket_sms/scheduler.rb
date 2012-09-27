@@ -118,7 +118,7 @@ module RocketSMS
           (payload, score) = response[0]
           if payload and score
             @fast = true
-            now = (Time.now.to_i
+            now = Time.now.to_i
             if score.to_i <= now
               process_payload(payload)
             else
