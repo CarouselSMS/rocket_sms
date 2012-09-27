@@ -118,7 +118,7 @@ module RocketSMS
           (payload, score) = response[0]
           if payload and score
             @fast = true
-            now = (Time.now.to_f*1000).to_i
+            now = (Time.now.to_i
             if score.to_i <= now
               process_payload(payload)
             else
@@ -176,7 +176,7 @@ module RocketSMS
           redis.zadd("gateway:transceivers:#{transceiver_id}:dispatch", score, message.to_json)
         end
       else
-        score = (message.send_at * 1000).to_i
+        score = message.send_at.to_i
         redis.zadd(queues[:mt][:pending], score, message.to_json)
       end
     end
@@ -197,7 +197,7 @@ module RocketSMS
         redis.rpush(queues[:mt][:failure], message.to_json)
       else
         message.add_pass
-        score = (Time.now.to_f + 15)*1000.to_i
+        score = Time.now.to_i
         redis.zadd(queues[:mt][:pending], score, message.to_json)
       end
     end
