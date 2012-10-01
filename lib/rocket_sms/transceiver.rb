@@ -183,7 +183,7 @@ module RocketSMS
       begin
         if @online
           log "Sending Message #{message.id} through DID #{message.sender} via #{@id}."
-          @mts[message.id] = message
+          @mts[message.id.to_s] = message
           @connection.send_mt(message.id,message.sender,message.receiver,message.body)
         else
           log "#{@id} is not connected. Pushing message #{message.id} to dispatch queue."
@@ -217,7 +217,7 @@ module RocketSMS
         message.accepted_at = Time.now.to_i
         EM.next_tick { redis.lpush(queues[:mt][:success],message.to_json) }
       else
-        log "#{@id} - Untracked MT Accepted for #{mt_message_id}"
+        log "#{@id} - Untracked MT Accepted #{mt_message_id}"
       end
     end
   
@@ -228,7 +228,7 @@ module RocketSMS
         message.rejected_at = Time.now.to_i
         EM.next_tick { redis.lpush(queues[:mt][:failure],message.to_json) }
       else
-        log "#{@id} - Untracked MT Rejected for #{mt_message_id}"
+        log "#{@id} - Untracked MT Rejected #{mt_message_id}"
       end
     end
   
