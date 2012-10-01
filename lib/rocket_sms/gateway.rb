@@ -38,19 +38,31 @@ module RocketSMS
         log "Stopping. Waiting 5 seconds for pending operations to finish."
         @kill = true
         @active = false
-        Process.kill('TERM', @scheduler[:pid])
-        Process.wait(@scheduler[:pid]) if @scheduler[:pid]
+        if @scheduler[:pid]
+          Process.kill('TERM', @scheduler[:pid]) rescue nil
+          Process.wait(@scheduler[:pid]) 
+        end
         if @transceivers
-          @transceivers.each_value{ |t| Process.kill('TERM', t[:pid]);  Process.wait(t[:pid]) if t[:pid] }
+          @transceivers.each_value do |t|
+          if t[:pid] 
+            Process.kill('TERM', t[:pid]) rescue nil
+            Process.wait(t[:pid])
+          end
         end
         EM::Timer.new(5){ shutdown }
       end
     end
 
     def shutdown
-      Process.kill('TERM', @scheduler[:pid])
+      if @scheduler[:pid]
+        Process.kill('TERM', @scheduler[:pid]) rescue nil
+      end
       if @transceivers
-        @transceivers.each_value{ |t| Process.kill('TERM', t[:pid]);  Process.wait(t[:pid]) if t[:pid] }
+        @transceivers.each_value do |t|
+          if t[:pid]
+            Process.kill('TERM', t[:pid]) rescue nil
+          end
+        end
       end
       log "Gateway DOWN."
       EM.stop
