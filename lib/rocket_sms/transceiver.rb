@@ -209,14 +209,15 @@ module RocketSMS
     end
   
     def message_accepted(transceiver, mt_message_id, pdu)
+      log pdu.stat
       log "#{@id} - Message #{mt_message_id} - Accepted"
-      ticket = { message_id: mt_message_id }
+      ticket = { id: mt_message_id }
       EM.next_tick { redis.lpush(queues[:mt][:success],MultiJson.dump(ticket)) }
     end
   
     def message_rejected(transceiver, mt_message_id, pdu)
       log "#{@id} - Message #{mt_message_id} - Rejected"
-      ticket = { message_id: mt_message_id }
+      ticket = { id: mt_message_id }
       EM.next_tick { redis.lpush(queues[:mt][:failure],MultiJson.dump(ticket)) }
     end
   
