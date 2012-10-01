@@ -8,6 +8,7 @@ module RocketSMS
       @online = false
       @fast = false
       @settings = {}
+      @mts = {}
     end
 
     def redis
@@ -182,6 +183,7 @@ module RocketSMS
       begin
         if @online
           log "Sending Message #{message.id} through DID #{message.sender} via #{@id}."
+          @mts[message.id] = message
           @connection.send_mt(message.id,message.sender,message.receiver,message.body)
         else
           log "#{@id} is not connected. Pushing message #{message.id} to dispatch queue."
@@ -210,14 +212,24 @@ module RocketSMS
   
     def message_accepted(transceiver, mt_message_id, pdu)
       log "#{@id} - Message #{mt_message_id} - Accepted"
-      ticket = { id: mt_message_id }
-      EM.next_tick { redis.lpush(queues[:mt][:success],MultiJson.dump(ticket)) }
+      message = @mts.delete(mt_message_id.to_s)
+      if message
+        message.accepted_at = Time.now.to_i
+        EM.next_tick { redis.lpush(queues[:mt][:success],message.to_json) }
+      else
+        log "#{@id} - Untracked MT Accepted for #{mt_message_id}"
+      end
     end
   
     def message_rejected(transceiver, mt_message_id, pdu)
       log "#{@id} - Message #{mt_message_id} - Rejected"
-      ticket = { id: mt_message_id }
-      EM.next_tick { redis.lpush(queues[:mt][:failure],MultiJson.dump(ticket)) }
+      message = @mts.delete(mt_message_id.to_s)
+      if message
+        message.rejected_at = Time.now.to_i
+        EM.next_tick { redis.lpush(queues[:mt][:failure],message.to_json) }
+      else
+        log "#{@id} - Untracked MT Rejected for #{mt_message_id}"
+      end
     end
   
     def bound(transceiver)
