@@ -209,7 +209,6 @@ module RocketSMS
     end
   
     def message_accepted(transceiver, mt_message_id, pdu)
-      log pdu.stat
       log "#{@id} - Message #{mt_message_id} - Accepted"
       ticket = { id: mt_message_id }
       EM.next_tick { redis.lpush(queues[:mt][:success],MultiJson.dump(ticket)) }
