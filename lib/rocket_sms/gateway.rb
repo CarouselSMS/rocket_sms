@@ -44,9 +44,10 @@ module RocketSMS
         end
         if @transceivers
           @transceivers.each_value do |t|
-          if t[:pid] 
-            Process.kill('TERM', t[:pid]) rescue nil
-            Process.wait(t[:pid])
+            if t[:pid] 
+              Process.kill('TERM', t[:pid]) rescue nil
+              Process.wait(t[:pid])
+            end
           end
         end
         EM::Timer.new(5){ shutdown }
