@@ -38,7 +38,8 @@ module RocketSMS
         success: 'gateway:queues:mt:success',
         failure: 'gateway:queues:mt:failure'
       },
-      mo: 'gateway:queues:mo:received'
+      mo: 'gateway:queues:mo:received',
+      dr: 'gateway:queues:dr'
     }
   end
 
