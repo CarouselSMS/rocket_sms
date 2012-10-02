@@ -161,7 +161,7 @@ module RocketSMS
             @dids[did.number] = {}
             @dids[did.number][:last_send] = Time.now.to_f + 1
           end
-          interval = did.throughput.to_f**-1
+          interval = (did.throughput.to_f*0.95)**-1
           last_send = @dids[did.number][:last_send]
           if Time.now.to_f - last_send > interval
             base_time = Time.now.to_f + 1
@@ -176,7 +176,7 @@ module RocketSMS
           redis.zadd("gateway:transceivers:#{transceiver_id}:dispatch", score, message.to_json)
         end
       else
-        score = message.send_at.to_i
+        score = message.send_at.to_i + 10
         redis.zadd(queues[:mt][:pending], score, message.to_json)
       end
     end
@@ -197,7 +197,7 @@ module RocketSMS
         redis.rpush(queues[:mt][:failure], message.to_json)
       else
         message.add_pass
-        score = Time.now.to_i
+        score = Time.now.to_i + 10
         redis.zadd(queues[:mt][:pending], score, message.to_json)
       end
     end

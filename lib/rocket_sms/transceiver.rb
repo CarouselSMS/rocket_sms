@@ -140,7 +140,7 @@ module RocketSMS
 
     def dispatch
       return unless @active
-      interval = @fast ? throughput**-1 : 0.5
+      interval = @fast ? (throughput.to_f*0.95)**-1 : 0.5
       @dispatcher = EM::Timer.new(interval){ dispatch }
       redis.multi
       redis.zrange("gateway:transceivers:#{@id}:dispatch", 0, 0)
@@ -225,8 +225,14 @@ module RocketSMS
       log "#{@id} - Message #{mt_message_id} - Rejected"
       message = @mts.delete(mt_message_id.to_s)
       if message
+        message.add_pass
         message.rejected_at = Time.now.to_i
-        EM.next_tick { redis.lpush(queues[:mt][:failure],message.to_json) }
+        if message.pass <= 5
+          score = Time.now.to_i + 10
+          EM.next_tick{ redis.zadd(queues[:mt][:pending], score, message.to_json) }
+        else
+          EM.next_tick { redis.lpush(queues[:mt][:failure],message.to_json) }
+        end
       else
         log "#{@id} - Untracked MT Rejected #{mt_message_id}"
       end
