@@ -152,7 +152,7 @@ module RocketSMS
         end
       rescue
         log 'Invalid Message.'
-        redis.lpush(queues[:mt][:failure]
+        redis.lpush(queues[:mt][:failure])
       end
     end
 
