@@ -133,21 +133,26 @@ module RocketSMS
     end
 
     def process_payload(msg_payload)
-      message = Message.from_json(msg_payload)
-      if message.pass > 5
-        log "Message #{message.id} has exceeded maximum retries. Send it to Failed queue."
-        redis.rpush(queues[:mt][:failure], message.to_json)
-      else
-        did_number = message.sender
-        redis.get("gateway:dids:#{did_number}") do |payload|
-          if payload
-            log "Scheduling Message #{message.id} to be sent through DID #{did_number}"
-            schedule(message, payload)
-          else
-            log "The DID #{did_number} for message #{message.id} is not configured. Retrying."
-            retry_message(message)
+      begin
+        message = Message.from_json(msg_payload)
+        if message.pass > 5
+          log "Message #{message.id} has exceeded maximum retries. Send it to Failed queue."
+          redis.lpush(queues[:mt][:failure], message.to_json)
+        else
+          did_number = message.sender
+          redis.get("gateway:dids:#{did_number}") do |payload|
+            if payload
+              log "Scheduling Message #{message.id} to be sent through DID #{did_number}"
+              schedule(message, payload)
+            else
+              log "The DID #{did_number} for message #{message.id} is not configured. Retrying."
+              retry_message(message)
+            end
           end
         end
+      rescue
+        log 'Invalid Message.'
+        redis.lpush(queues[:mt][:failure]
       end
     end
 
@@ -194,7 +199,7 @@ module RocketSMS
     def retry_message(message)
       if message.pass > 5
         log "Message #{message.id} has exceeded maximum retries. Send it to Failed queue."
-        redis.rpush(queues[:mt][:failure], message.to_json)
+        redis.lpush(queues[:mt][:failure], message.to_json)
       else
         message.add_pass
         score = Time.now.to_i + 10
