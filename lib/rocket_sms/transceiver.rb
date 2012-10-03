@@ -140,7 +140,7 @@ module RocketSMS
 
     def dispatch
       return unless @active
-      interval = @fast ? (throughput.to_f*0.95)**-1 : 0.5
+      interval = @fast ? (throughput.to_f*0.90)**-1 : 0.5
       @dispatcher = EM::Timer.new(interval){ dispatch }
       redis.multi
       redis.zrange("gateway:transceivers:#{@id}:dispatch", 0, 0)
