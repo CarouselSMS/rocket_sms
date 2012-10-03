@@ -192,7 +192,7 @@ module RocketSMS
       rescue Exception
         log "### Error Sending MT #{message.id} with DID #{message.sender} through Transceiver #{@id}. Retrying message."
         message.add_pass
-        score = (( Time.now.to_f + 15 ) * 1000).to_i
+        score = Time.now.to_i + 15
         redis.zadd(queues[:mt][:pending], score, message.to_json)
       end
     end
