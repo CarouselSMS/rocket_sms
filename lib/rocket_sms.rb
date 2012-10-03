@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'bundler/setup'
 require 'eventmachine'
-require 'smpp'
 require 'em-hiredis'
 require 'oj'
 require 'multi_json'
@@ -9,6 +8,14 @@ require 'singleton'
 require 'securerandom'
 require 'ostruct'
 require 'forwardable'
+#require 'smpp'
+
+path = File.expand_path(__FILE__).split('/')
+path.delete_at(-1)
+path.delete_at(-1)
+path = path.join('/')
+
+require "#{path}/vendor/ruby-smpp/lib/smpp.rb"
 
 require "rocket_sms/version"
 

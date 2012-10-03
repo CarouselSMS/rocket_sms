@@ -18,7 +18,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
 
   gem.add_dependency 'eventmachine', '~> 1.0.0'
-  gem.add_dependency 'ruby-smpp'
+  #gem.add_dependency 'ruby-smpp'
   gem.add_dependency 'em-hiredis'
   gem.add_dependency 'oj'
   gem.add_dependency 'multi_json'
