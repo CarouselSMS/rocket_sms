@@ -153,7 +153,6 @@ module RocketSMS
             now = Time.now.to_f
             message = Message.from_json(payload)
             if message.send_at > now
-              log "Message #{message.id} detected on #{@id} but still cannot be sent. Pushing to dispatch queue."
               score = (message.send_at * 1000).to_i
               redis.zadd("gateway:transceivers:#{@id}:dispatch", score , payload)
             elsif message.send_at <= now and now < message.expires_at
