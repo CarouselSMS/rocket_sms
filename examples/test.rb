@@ -24,7 +24,7 @@ end
 t = Proc.new do
   45.times do |i|
     id = "#{SecureRandom.hex(8)}"
-    message = {id: id, sender: dids.sample[:number], receiver: '9999999999', body: 'Hello World!' }
+    message = {id: id, sender: dids.sample[:number], receiver: '9999999999', body: 'Attention LOs: Rob Huddle will be on vacation from Oct 4th - Oct 12th. In his absence, please contact Rachael Hawk with all urgent matters. Thank you' }
     score = Time.now.to_i
     r.zadd('gateway:queues:mt:pending', score, message.to_json)
   end
