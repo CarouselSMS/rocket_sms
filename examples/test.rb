@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'rubygems'
 require 'json'
 require 'redis'
@@ -23,10 +24,14 @@ end
 
 t = Proc.new do
   45.times do |i|
-    id = "#{SecureRandom.hex(8)}"
-    message = {id: id, sender: dids.sample[:number], receiver: '9999999999', body: 'Attention LOs: Rob Huddle will be on vacation from Oct 4th - Oct 12th. In his absence, please contact Rachael Hawk with all urgent matters. Thank you' }
-    score = Time.now.to_i
-    r.zadd('gateway:queues:mt:pending', score, message.to_json)
+    msgs = []
+    msgs << {id: "#{SecureRandom.hex(8)}", sender: dids.sample[:number], receiver: '9999999999', body: 'Attention LOs: Rob Huddle will be on vacation from Oct 4th - Oct 12th. In his absence, please contact Rachael Hawk with all urgent matters. Thank you' }
+    body = %q{ @$¥èéùìòÇØøÅå_^{}\[~]|ÆæßÉ !"#¤%&(')*+,-./0123456789:;<=>? ¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà"}
+    msgs << {id: "#{SecureRandom.hex(8)}", sender: dids.sample[:number], receiver: '9999999999', body: body } 
+    msgs.each do |m|
+      score = Time.now.to_i
+      r.zadd('gateway:queues:mt:pending', score, m.to_json)
+    end
   end
 end
 

@@ -210,9 +210,9 @@ module RocketSMS
     end
   
     def message_accepted(transceiver, mt_message_id, pdu)
-      log "#{@id} - Message #{mt_message_id} - Accepted"
       message = @mts.delete(mt_message_id.to_s)
       if message
+        log "#{@id} - Message #{message.id} - Accepted"
         message.accepted_at = Time.now.to_i
         EM.next_tick { redis.lpush(queues[:mt][:success],message.to_json) }
       else
@@ -221,9 +221,9 @@ module RocketSMS
     end
   
     def message_rejected(transceiver, mt_message_id, pdu)
-      log "#{@id} - Message #{mt_message_id} - Rejected"
       message = @mts.delete(mt_message_id.to_s)
       if message
+        log "#{@id} - Message #{message.id} - Rejected"
         message.add_pass
         message.rejected_at = Time.now.to_i
         if message.pass <= 5
