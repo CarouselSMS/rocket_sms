@@ -166,7 +166,7 @@ module RocketSMS
             @dids[did.number] = {}
             @dids[did.number][:last_send] = Time.now.to_f + 1
           end
-          interval = (did.throughput.to_f*0.90)**-1
+          interval = ((did.throughput.to_f)**-1)*1.1
           last_send = @dids[did.number][:last_send]
           if Time.now.to_f - last_send > interval
             base_time = Time.now.to_f + 1
