@@ -183,14 +183,16 @@ module RocketSMS
         if @online
           log "Sending Message #{message.id} through DID #{message.sender} via #{@id}."
           @mts[message.id.to_s] = message
-          @connection.send_mt(message.id,message.sender,message.receiver,message.body)
+          options = (message.body.ascii_only?) ? {} : {:data_coding => 8}
+          log "body: #{message.body.inspect}"
+          @connection.send_mt(message.id,message.sender,message.receiver,message.body, options)
         else
           log "#{@id} is not connected. Pushing message #{message.id} to dispatch queue."
           score = (message.send_at * 1000).to_i
           redis.zadd("gateway:transceivers:#{@id}:dispatch", score , payload)
         end
-      rescue Exception
-        log "### Error Sending MT #{message.id} with DID #{message.sender} through Transceiver #{@id}. Retrying message."
+      rescue Exception => e
+        log "### Error Sending MT #{message.id} with DID #{message.sender} through Transceiver #{@id}. Retrying message. Exception: #{e.inspect}"
         message.add_pass
         score = Time.now.to_i + 15
         redis.zadd(queues[:mt][:pending], score, message.to_json)
@@ -214,6 +216,9 @@ module RocketSMS
       if message
         log "#{@id} - Message #{message.id} - Accepted"
         message.accepted_at = Time.now.to_i
+        message.smsc_message_id = pdu.message_id
+        message.smsc_message_ids ||= []
+        message.smsc_message_ids << pdu.message_id
         EM.next_tick { redis.lpush(queues[:mt][:success],message.to_json) }
       else
         log "#{@id} - Untracked MT Accepted #{mt_message_id}"
@@ -226,6 +231,9 @@ module RocketSMS
         log "#{@id} - Message #{message.id} - Rejected"
         message.add_pass
         message.rejected_at = Time.now.to_i
+        message.smsc_message_id = pdu.message_id
+        message.smsc_message_ids ||= []
+        message.smsc_message_ids << pdu.message_id
         if message.pass <= 5
           score = Time.now.to_i + 10
           EM.next_tick{ redis.zadd(queues[:mt][:pending], score, message.to_json) }

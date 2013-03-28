@@ -24,7 +24,7 @@ module RocketSMS
 
   # Disable ruby-smpp logging
   require 'tempfile'
-  Smpp::Base.logger = Logger.new(Tempfile.new('ruby-smpp').path)
+  Smpp::Base.logger = Logger.new('logs/smpp.log')
 
   LIB_PATH = File.dirname(__FILE__) + '/rocket_sms/'
 

@@ -30,8 +30,14 @@ class Smpp::Pdu::SubmitSm < Smpp::Pdu::Base
     @data_coding             = options[:data_coding]?options[:data_coding]:3 # iso-8859-1
     @sm_default_msg_id       = options[:sm_default_msg_id]?options[:sm_default_msg_id]:0
     @short_message           = short_message
+
+    if @data_coding == 8
+        @short_message = @short_message.encode("UTF-16BE").force_encoding("BINARY")
+    end
+
     payload                  = @udh ? @udh + @short_message : @short_message 
-    @sm_length               = payload.length
+
+    @sm_length               = payload.bytesize
     
     @optional_parameters     = options[:optional_parameters]
     
