@@ -65,8 +65,8 @@ module RocketSMS
 
   def settings=(duck)
     @settings = symbolize_keys(duck.is_a?(Hash) ? duck : YAML.load(IO.read(duck)))
-    redis_url = @settings[:redis] && @settings[:redis][:url]
-    log_location = @settings[:log] && @settings[:log][:location]
+    self.redis_url = @settings[:redis] && @settings[:redis][:url]
+    self.log_location = @settings[:log] && @settings[:log][:location]
   end
 
   def settings
