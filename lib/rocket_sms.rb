@@ -88,6 +88,7 @@ module RocketSMS
   end
 
   def log_location=(location)
+    log_location.sync = true if log_location.respond_to? :sync=
     @log_location = location unless location.nil?
   end
 
