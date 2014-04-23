@@ -22,9 +22,6 @@ require "rocket_sms/version"
 module RocketSMS
   extend self
 
-  # Disable ruby-smpp logging
-  require 'tempfile'
-  Smpp::Base.logger = Logger.new('logs/smpp.log')
 
   LIB_PATH = File.dirname(__FILE__) + '/rocket_sms/'
 
@@ -34,6 +31,7 @@ module RocketSMS
 
   def start
     @pid = Process.pid
+    Smpp::Base.logger = self.logger
     #Process.daemon
     gateway.start
   end
