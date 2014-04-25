@@ -3,7 +3,7 @@ module RocketSMS
   class Scheduler
     include Singleton
 
-    attr_accessor :redis_url, :log_location
+    attr_accessor :redis_url, :log_location, :log_level
 
     def initialize
       @redis_url, @log_location = nil, nil
@@ -19,7 +19,7 @@ module RocketSMS
     end
 
     def logger
-      @logger ||= Logger.new(@log_location)
+      @logger ||= Logger.new(@log_location).tap { |l| l.level = log_level }
     end
 
     def log(msg, level = 'info')

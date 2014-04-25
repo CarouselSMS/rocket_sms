@@ -2,8 +2,8 @@ module RocketSMS
 
   class Transceiver
 
-    def initialize(id, redis_url, log_location)
-      @id, @redis_url, @log_location = id, redis_url, log_location
+    def initialize(id, redis_url, log_location, log_level)
+      @id, @redis_url, @log_location, @log_level = id, redis_url, log_location, log_level
       @active = true
       @online = false
       @fast = false
@@ -20,7 +20,7 @@ module RocketSMS
     end
 
     def logger
-      @logger ||= Logger.new(@log_location)
+      @logger ||= Logger.new(@log_location).tap { |l| l.level = @log_level }
     end
 
     def log(msg, level = 'info')
