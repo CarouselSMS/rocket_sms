@@ -64,7 +64,6 @@ module RocketSMS
   def settings=(duck)
     @settings = symbolize_keys(duck.is_a?(Hash) ? duck : YAML.load(IO.read(duck)))
     self.redis_url = @settings[:redis] && @settings[:redis][:url]
-    self.log_location = @settings[:log] && @settings[:log][:location]
   end
 
   def settings
@@ -80,7 +79,7 @@ module RocketSMS
   end
 
   def logger
-    @logger ||= Logger.new(log_location)
+    @logger ||= Logger.new(log_location).tap { |l| l.level = log_level }
   end
 
   def log_location
@@ -90,6 +89,14 @@ module RocketSMS
   def log_location=(location)
     log_location.sync = true if log_location.respond_to? :sync=
     @log_location = location unless location.nil?
+  end
+
+  def log_level
+    @log_level ||= Logger::INFO
+  end
+
+  def log_level=(level)
+    @log_level = level
   end
 
   def symbolize_keys(hash)
