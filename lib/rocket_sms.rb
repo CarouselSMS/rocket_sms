@@ -32,7 +32,6 @@ module RocketSMS
   def start
     @pid = Process.pid
     Smpp::Base.logger = self.logger
-    #Process.daemon
     gateway.start
   end
 

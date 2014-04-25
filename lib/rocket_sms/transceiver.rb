@@ -40,6 +40,7 @@ module RocketSMS
     end
 
     def start
+      Smpp::Base.logger = self.logger
       EM.threadpool_size = 128
       EM.set_max_timers(100_000)
       EM.run do

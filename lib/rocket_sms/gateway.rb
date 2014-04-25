@@ -4,7 +4,7 @@ module RocketSMS
     include Singleton
     extend Forwardable
 
-    def_delegators :RocketSMS, :settings, :redis, :logger, :redis_url, :log_location
+    def_delegators :RocketSMS, :settings, :redis, :logger, :redis_url, :log_location, :log_level
 
     def initialize
       @scheduler = {}
@@ -107,14 +107,14 @@ module RocketSMS
 
     def start_scheduler
       cmd = "bundle exec ruby #{@path}/bin/scheduler_runner.rb"
-      @scheduler[:pid] = Process.spawn({ "REDIS_URL" => redis_url, "LOG_LOCATION" => (log_location == STDOUT ? nil : log_location) }, cmd)
+      @scheduler[:pid] = Process.spawn({ "REDIS_URL" => redis_url, "LOG_LOCATION" => (log_location == STDOUT ? nil : log_location), "LOG_LEVEL" => log_level.to_s }, cmd)
     end
 
     def start_transceivers
       settings[:transceivers].each do |tid, settings|
         cmd = "bundle exec ruby #{@path}/bin/transceiver_runner.rb"
         @transceivers[tid] = {}
-        @transceivers[tid][:pid] = Process.spawn({ "TRANSCEIVER_ID" => tid.to_s ,"REDIS_URL" => redis_url, "LOG_LOCATION" => (log_location == STDOUT ? nil : log_location) }, cmd)
+        @transceivers[tid][:pid] = Process.spawn({ "TRANSCEIVER_ID" => tid.to_s ,"REDIS_URL" => redis_url, "LOG_LOCATION" => (log_location == STDOUT ? nil : log_location), "LOG_LEVEL" => log_level.to_s }, cmd)
       end
     end
 
