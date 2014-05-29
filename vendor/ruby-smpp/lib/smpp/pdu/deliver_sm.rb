@@ -59,7 +59,7 @@ class Smpp::Pdu::DeliverSm < Smpp::Pdu::Base
                        @data_coding,
                        @sm_default_msg_id,
                        @sm_length,
-                       payload.force_encoding('ascii-8bit')
+                       payload.force_encoding('us-ascii')
                       )
 
     seq ||= next_sequence_number
