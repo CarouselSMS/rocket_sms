@@ -41,9 +41,26 @@ class Smpp::Pdu::DeliverSm < Smpp::Pdu::Base
     @message_state           = options[:message_state]
     @optional_parameters     = options[:optional_parameters]
 
-    pdu_body = sprintf("%s\0%c%c%s\0%c%c%s\0%c%c%c%s\0%s\0%c%c%c%c%c%s", @service_type, @source_addr_ton, @source_addr_npi, @source_addr,
-    @dest_addr_ton, @dest_addr_npi, @destination_addr, @esm_class, @protocol_id, @priority_flag, @schedule_delivery_time, @validity_period,
-    @registered_delivery, @replace_if_present_flag, @data_coding, @sm_default_msg_id, @sm_length, payload)
+    pdu_body = sprintf("%s\0%c%c%s\0%c%c%s\0%c%c%c%s\0%s\0%c%c%c%c%c%s",
+                       @service_type,
+                       @source_addr_ton,
+                       @source_addr_npi,
+                       @source_addr,
+                       @dest_addr_ton,
+                       @dest_addr_npi,
+                       @destination_addr,
+                       @esm_class,
+                       @protocol_id,
+                       @priority_flag,
+                       @schedule_delivery_time,
+                       @validity_period,
+                       @registered_delivery,
+                       @replace_if_present_flag,
+                       @data_coding,
+                       @sm_default_msg_id,
+                       @sm_length,
+                       payload.force_encoding('ascii-8bit')
+                      )
 
     seq ||= next_sequence_number
 
