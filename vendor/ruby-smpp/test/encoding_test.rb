@@ -8,14 +8,6 @@ require File.expand_path(File.dirname(__FILE__) + "../../lib/smpp")
 class EncodingTest < Test::Unit::TestCase
 
 
-  def setup
-    ::Smpp::Pdu::DeliverSm.data_encoder = ::Smpp::Encoding::Utf8Encoder.new
-  end
-
-  def teardown
-    ::Smpp::Pdu::DeliverSm.data_encoder = nil
-  end
-
   def test_should_decode_pound_sign_from_hp_roman_8_to_utf_8
     raw_data = <<-EOF
     0000 003d 0000 0005 0000 0000 0000 0002
