@@ -9,7 +9,7 @@ class Smpp::Pdu::DeliverSm < Smpp::Pdu::Base
               :sm_default_msg_id, :sm_length, :stat, :msg_reference, :udh, :short_message,
               :message_state, :receipted_message_id, :optional_parameters
 
-  @@encoder = nil
+  @@encoder = ::Smpp::Encoding::Utf8Encoder.new
 
   def initialize(source_addr, destination_addr, short_message, options={}, seq=nil) 
     
@@ -152,8 +152,4 @@ class Smpp::Pdu::DeliverSm < Smpp::Pdu::Base
     new(source_addr, destination_addr, short_message, options, seq) 
   end
 
-  #set an encoder that can be called to yield the data_coding and short_message
-  def self.data_encoder=(encoder)
-    @@encoder = encoder
-  end
 end
