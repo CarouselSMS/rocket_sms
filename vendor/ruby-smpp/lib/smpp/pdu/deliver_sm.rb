@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 require 'smpp/encoding/utf8_encoder'
 
 # Received for MO message or delivery notification
