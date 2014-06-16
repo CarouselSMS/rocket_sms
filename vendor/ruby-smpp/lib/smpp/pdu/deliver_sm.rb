@@ -1,3 +1,4 @@
+require 'smpp/encoding/utf8_encoder'
 
 # Received for MO message or delivery notification
 class Smpp::Pdu::DeliverSm < Smpp::Pdu::Base 
