@@ -235,6 +235,8 @@ module RocketSMS
         message.smsc_message_id = pdu.message_id
         message.smsc_message_ids ||= []
         message.smsc_message_ids << pdu.message_id
+        message.pdu_status = pdu.command_status
+        message.pdu_trace = pdu.to_human
         if message.pass <= 5
           score = Time.now.to_i + 10
           EM.next_tick{ redis.zadd(queues[:mt][:pending], score, message.to_json) }
