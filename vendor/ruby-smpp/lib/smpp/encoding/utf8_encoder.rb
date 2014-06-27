@@ -24,10 +24,10 @@ module Smpp
       def encode(data_coding, short_message)
         if data_coding < 2
           sm = short_message.gsub(/\215./) { |match| GSM_ESCAPED_CHARACTERS[match[1]] }
-          sm = Iconv.conv("UTF-8", "HP-ROMAN8", sm)
+          sm = sm.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
           sm.gsub(EURO_TOKEN, "\342\202\254")
         elsif data_coding == 8
-          Iconv.conv("UTF-8", "UTF-16BE", short_message)
+          short_message.encode('UTF-8', invalid: :replace, undef: :replace, replace: '')
         else
           short_message
         end
