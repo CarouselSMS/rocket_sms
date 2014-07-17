@@ -220,7 +220,10 @@ module RocketSMS
         message.smsc_message_id = pdu.message_id
         message.smsc_message_ids ||= []
         message.smsc_message_ids << pdu.message_id
-        EM.next_tick { redis.lpush(queues[:mt][:success],message.to_json) }
+        EM.next_tick {
+          redis.hincrby('debug:tranceiver_stats', message.id, 1)
+          redis.lpush(queues[:mt][:success],message.to_json)
+        }
       else
         log "#{@id} - Untracked MT Accepted #{mt_message_id}"
       end
