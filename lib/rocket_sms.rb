@@ -25,7 +25,7 @@ module RocketSMS
 
   LIB_PATH = File.dirname(__FILE__) + '/rocket_sms/'
 
-  %w{ gateway did message transceiver scheduler lock }.each do |dep|
+  %w{ gateway did message sidekiq_deliver transceiver scheduler lock }.each do |dep|
     require LIB_PATH + dep
   end
 

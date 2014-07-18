@@ -22,6 +22,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'em-hiredis'
   gem.add_dependency 'oj'
   gem.add_dependency 'multi_json'
+  gem.add_dependency 'sidekiq'
 
   gem.add_development_dependency 'rspec'
   gem.add_development_dependency 'cucumber'

@@ -203,7 +203,10 @@ module RocketSMS
     def mo_received(transceiver, pdu)
       log "#{@id} - Message Received"
       ticket = { pdu: { source_addr: pdu.source_addr, short_message: pdu.short_message, destination_addr: pdu.destination_addr } }
-      EM.next_tick { redis.lpush(queues[:mo],MultiJson.dump(ticket)) }
+      EM.next_tick {
+        redis.lpush(queues[:mo],MultiJson.dump(ticket))
+        SidekiqDeliver.register_message_received(MultiJson.dump(ticket))
+      }
     end
   
     def delivery_report_received(transceiver, pdu)
@@ -221,8 +224,8 @@ module RocketSMS
         message.smsc_message_ids ||= []
         message.smsc_message_ids << pdu.message_id
         EM.next_tick {
-          redis.hincrby('debug:tranceiver_stats', message.id, 1)
           redis.lpush(queues[:mt][:success],message.to_json)
+          SidekiqDeliver.register_message_accepted(message.to_json)
         }
       else
         log "#{@id} - Untracked MT Accepted #{mt_message_id}"
@@ -244,7 +247,10 @@ module RocketSMS
           score = Time.now.to_i + 10
           EM.next_tick{ redis.zadd(queues[:mt][:pending], score, message.to_json) }
         else
-          EM.next_tick { redis.lpush(queues[:mt][:failure],message.to_json) }
+          EM.next_tick {
+            redis.lpush(queues[:mt][:failure],message.to_json)
+            SidekiqDeliver.register_message_rejected(message.to_json)
+          }
         end
       else
         log "#{@id} - Untracked MT Rejected #{mt_message_id}"
