@@ -8,6 +8,7 @@ require 'singleton'
 require 'securerandom'
 require 'ostruct'
 require 'forwardable'
+require 'sidekiq'
 #require 'smpp'
 
 path = File.expand_path(__FILE__).split('/')
